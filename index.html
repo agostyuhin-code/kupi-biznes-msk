@@ -733,8 +733,13 @@ class Component extends DCLogic {
           source: 'kupi-biznes-msk.ru'
         })
       });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        console.warn('[Лиды] Воркер ответил ' + res.status + ': ' + body);
+      }
       return res.ok;
     } catch (e) {
+      console.warn('[Лиды] Запрос к воркеру не прошёл (CORS или сеть):', e);
       return false;
     }
   }
