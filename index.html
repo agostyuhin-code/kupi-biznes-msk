@@ -717,7 +717,9 @@ class Component extends DCLogic {
 
   async notifyTelegram(isReportForm, name, phone) {
     const endpoint = this.endpoint();
+    this._lastErr = '';
     if (!endpoint) {
+      this._lastErr = 'адрес воркера не указан';
       console.warn('[Лиды] Приём заявок не настроен: впишите адрес воркера в window.__leadEndpoint.');
       return false;
     }
@@ -736,10 +738,12 @@ class Component extends DCLogic {
       if (!res.ok) {
         const body = await res.text().catch(() => '');
         console.warn('[Лиды] Воркер ответил ' + res.status + ': ' + body);
+        this._lastErr = 'код ' + res.status + (body ? ', ' + body.slice(0, 40) : '');
       }
       return res.ok;
     } catch (e) {
       console.warn('[Лиды] Запрос к воркеру не прошёл (CORS или сеть):', e);
+      this._lastErr = 'нет ответа от воркера (CORS/сеть)';
       return false;
     }
   }
@@ -759,7 +763,8 @@ class Component extends DCLogic {
     const ok = await this.notifyTelegram(first, name, phone);
 
     if (!ok) {
-      const failMsg = 'Не удалось отправить заявку. Позвоните +7 933 277-00-55 или напишите в Telegram @alex_efre — отвечу лично.';
+      const failMsg = 'Не удалось отправить заявку. Позвоните +7 933 277-00-55 или напишите в Telegram @alex_efre — отвечу лично.' +
+        (this._lastErr ? ' [' + this._lastErr + ']' : '');
       this.setState(first ? { sending: false, error: failMsg } : { sending2: false, error2: failMsg });
       if (window.__goal) window.__goal('lead_failed');
       return;
